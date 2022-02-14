@@ -8,6 +8,7 @@ import time
 
 from circuitUtils import get_sycamore23_qubits, get_sycamore_circuit, get_simple_circuit, get_order_array
 from algorithms import square_mod, get_fourier_cf
+from sampling_algorithm import SamplingAlgorithm
 
 def simulate_circuit(
     circuit: cirq.Circuit,
@@ -36,6 +37,7 @@ def simulate_circuit(
     return result
 
 def simulate_sycamore_circuit(
+    N: int,
     depth: int = 20,
     num_extra_qubits: int = 0
 ) -> StateVectorTrialResult:
@@ -54,10 +56,11 @@ def simulate_sycamore_circuit(
     result : StateVectorTrialResult
         Final quantum state vector from the simulated circuit    
     """
-
+    if (N > 23 + num_extra_qubits):
+        raise ValueError(f"N is larger than 23 + {num_extra_qubits}")
     qubits  = get_sycamore23_qubits(num_extra_qubits)
-    circuit = get_sycamore_circuit(qubits, depth)
-    result  = simulate_circuit(circuit, qubits)
+    circuit = get_sycamore_circuit(qubits[:N], depth)
+    result  = simulate_circuit(circuit, qubits[:N])
     return result
 
 def simulate_basic_circuit() -> StateVectorTrialResult:
@@ -74,34 +77,55 @@ def simulate_basic_circuit() -> StateVectorTrialResult:
     result                     = simulate_circuit(basic_circuit, qubit_order)
     return result
 
-def get_HOG(k, fourier_coeff):
+# def get_HOG(k, fourier_coeff):
+#     mask = order_arr <= k
+#     fourier_coeff_upto_order_k = mask * fourier_coeff
+#     HOG = np.sum(square_mod(fourier_coeff_upto_order_k))
+#     return HOG
+
+def get_XEB(k, correlators):
     mask = order_arr <= k
-    fourier_coeff_upto_order_k = mask * fourier_coeff
-    HOG = np.sum(square_mod(fourier_coeff_upto_order_k))
-    return HOG
+    correlators_upto_order_k = mask * correlators
+    return np.sum(square_mod(correlators_upto_order_k))
 
-def plot_HOB_for_every_k(N: int, fourier_coeff):
-    orders = np.arange(N+1)
-    HOBs = []
+# def plot_HOB_for_every_k(N: int, fourier_coeff):
+#     orders = np.arange(N+1)
+#     HOBs = []
+#     for i in orders:
+#         HOBs.append(get_HOG(i, fourier_coeff))
+
+#     # plt.scatter(orders, HOBs)
+#     # plt.plot(orders, HOBs)
+#     # plt.show()
+
+#     XEBs = 2**N * np.array(HOBs) - 1
+#     plt.scatter(orders, XEBs)
+#     plt.plot(orders, XEBs)
+#     plt.ylabel("XEB")
+#     plt.xlabel("Order of FC")
+#     plt.show()
+
+def plot_XEB_for_every_k(N: int, correlators):
+    orders = np.arange(N + 1)
+    XEBs = []
     for i in orders:
-        HOBs.append(get_HOG(i, fourier_coeff))
-
-    plt.scatter(orders, HOBs)
-    plt.plot(orders, HOBs)
-    plt.show()
-
-    XEBs = 2**N * np.array(HOBs) - 1
-    plt.scatter(orders, XEBs)
+        XEBs.append(get_XEB(i, correlators))
+    XEBs = np.array(XEBs) - 1
+    plt.style.use('seaborn-whitegrid')
     plt.plot(orders, XEBs)
+    plt.scatter(orders, XEBs)
+    plt.xlabel("Order of Correlators")
+    plt.ylabel("XEB")
     plt.show()
 
 def main():
+    num_qubits = int(input("Number of qubits between 1 and 23: "))
     # Get order of each Fourier coefficient to use later
     global order_arr 
-    order_arr = get_order_array()
+    order_arr = get_order_array(N=num_qubits)
 
-    np.random.seed(2)
-    result, N = simulate_sycamore_circuit(), 23
+    # np.random.seed(2)
+    result = simulate_sycamore_circuit(N=num_qubits)
     # result, N = simulate_basic_circuit(), 2
 
     # Print the final state vector (wavefunction).
@@ -113,9 +137,16 @@ def main():
     print(f"\nProbability vector:\n{q_state}")
 
     # Applying Welsch-Hadamard transform to obtain Fourier coefficients
-    fourier_coeff = get_fourier_cf(q_state) / (2**(N/2))
-    print(f"\nFourier coefficients:\n{fourier_coeff:}")
-    return fourier_coeff
+    correlators = get_fourier_cf(q_state)
+    print(f"\nArray of correlators:\n{correlators}")
+    
+    plot_XEB_for_every_k(num_qubits, correlators)
+
+    alg = SamplingAlgorithm(correlators)
+    # for num_qubits in range(1, num_qubits):
+    #     alg.sample_events(num_outcomes=1, num_qubits=num_qubits )
+
+    alg.sample_random_circuit(k=num_qubits)    
 
 if __name__ == "__main__":
     main()
