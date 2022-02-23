@@ -139,14 +139,12 @@ def main():
     # Applying Welsch-Hadamard transform to obtain Fourier coefficients
     correlators = get_fourier_cf(q_state)
     print(f"\nArray of correlators:\n{correlators}")
+
+    # plot_XEB_for_every_k(num_qubits, correlators)
     
-    plot_XEB_for_every_k(num_qubits, correlators)
+    return SamplingAlgorithm(correlators)
 
-    alg = SamplingAlgorithm(correlators)
-    # for num_qubits in range(1, num_qubits):
-    #     alg.sample_events(num_outcomes=1, num_qubits=num_qubits )
-
-    alg.sample_random_circuit(k=num_qubits)    
+ 
 
 if __name__ == "__main__":
     main()
