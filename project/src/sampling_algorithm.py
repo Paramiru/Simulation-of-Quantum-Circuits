@@ -1,10 +1,13 @@
-import numpy as np
-from numpy.random import SeedSequence
-from circuitUtils import get_order_array
-import pandas as pd
-
 from collections import defaultdict
+
+import numpy as np
+import pandas as pd
+from numpy.random import SeedSequence
+
+from circuitUtils import get_order_array
 from IO import getPrintProbString
+
+
 class SamplingAlgorithm():
 
     def __init__(self, correlators): 

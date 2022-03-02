@@ -1,14 +1,10 @@
+import time
+from typing import List, Tuple, Iterable
+
 import cirq
 import cirq_google
-
-from typing import List, Tuple
-from collections.abc import Iterable
-
-import time
-
-import numpy as np
-
 import gmpy2
+import numpy as np
 
 
 def get_extra_qubits_for_sycamore() -> List[cirq.GridQubit]:
@@ -187,8 +183,3 @@ def get_order_array(N: int = 23) -> np.array:
     # toc    = time.perf_counter()
     # print(f"{toc - tic} seconds")
     return np.fromiter(seq, dtype=np.int32)
-    
-
-if __name__ == "__main__":
-    r = get_order_array(23)
-    print(r)
