@@ -6,6 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
+from sympy import fwht
+
 from circuitUtils import get_sycamore23_qubits, get_sycamore_circuit, get_simple_circuit, get_order_array
 from algorithms import square_mod, get_fourier_cf
 from sampling_algorithm import SamplingAlgorithm
@@ -77,12 +79,6 @@ def simulate_basic_circuit() -> StateVectorTrialResult:
     result                     = simulate_circuit(basic_circuit, qubit_order)
     return result
 
-# def get_HOG(k, fourier_coeff):
-#     mask = order_arr <= k
-#     fourier_coeff_upto_order_k = mask * fourier_coeff
-#     HOG = np.sum(square_mod(fourier_coeff_upto_order_k))
-#     return HOG
-
 def get_XEB(k, correlators):
     mask = order_arr <= k
     correlators_upto_order_k = mask * correlators
@@ -97,13 +93,6 @@ def get_XEB(k, correlators):
 #     # plt.scatter(orders, HOBs)
 #     # plt.plot(orders, HOBs)
 #     # plt.show()
-
-#     XEBs = 2**N * np.array(HOBs) - 1
-#     plt.scatter(orders, XEBs)
-#     plt.plot(orders, XEBs)
-#     plt.ylabel("XEB")
-#     plt.xlabel("Order of FC")
-#     plt.show()
 
 def plot_XEB_for_every_k(N: int, correlators):
     orders = np.arange(N + 1)
@@ -137,14 +126,15 @@ def main():
     print(f"\nProbability vector:\n{q_state}")
 
     # Applying Welsch-Hadamard transform to obtain Fourier coefficients
+    # correlators = fwht(q_state)
     correlators = get_fourier_cf(q_state)
     print(f"\nArray of correlators:\n{correlators}")
 
-    # plot_XEB_for_every_k(num_qubits, correlators)
+    plot_XEB_for_every_k(num_qubits, correlators)
     
-    return SamplingAlgorithm(correlators)
-
- 
+    alg = SamplingAlgorithm(correlators)
+    return alg
+    # alg.writeHog()
 
 if __name__ == "__main__":
     main()
