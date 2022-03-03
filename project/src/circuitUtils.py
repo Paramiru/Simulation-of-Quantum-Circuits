@@ -1,10 +1,8 @@
 import time
-from typing import List, Tuple, Iterable
+from typing import Iterable, List, Tuple
 
 import cirq
 import cirq_google
-import gmpy2
-import numpy as np
 
 
 def get_extra_qubits_for_sycamore() -> List[cirq.GridQubit]:
@@ -158,28 +156,3 @@ def sample_circuit(
     toc = time.perf_counter()
     print(f"Circuit sampled with {repetitions} repetitions in {toc - tic:0.4f} seconds")
     return result
-
-def get_order_array(N: int = 23) -> np.array:
-    """Obtain the corresponding order for each Fourier coefficient as an ordered array.
-    Order is defined as the hamming distance of the computational basis state vector,
-    which can be thought of as the number of 1s it contains.
-    E.g. first element of the array corresponds to comp. basis state |0>^n hence order 0, 
-    second element is 1 because the hamming distance of |0...1> is 1, etc.
-
-    Args
-    ----
-    N : int
-        Number of qubits the quantum circuit has
-    
-    Returns
-    -------
-    arr : np.array
-        Array containing the order of the coefficients for each comp. basis state.
-    
-    """
-    
-    # tic    = time.perf_counter()
-    seq = map(gmpy2.popcount, range(2**N))
-    # toc    = time.perf_counter()
-    # print(f"{toc - tic} seconds")
-    return np.fromiter(seq, dtype=np.int32)

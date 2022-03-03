@@ -2,6 +2,11 @@ import numpy as np
 import numpy.typing as npt
 from numpy.testing import assert_allclose
 
+from sampling_algorithm import SamplingAlgorithm
+from simulations import simulate_sycamore_circuit
+from utils import get_order_array, square_mod
+
+
 def fwht(a: npt.NDArray):
     """In-place Fast Walsh–Hadamard Transform of array a
     
@@ -42,23 +47,27 @@ def get_fourier_cf(qn_state: npt.NDArray) -> npt.NDArray:
     fwht(fourier_cf)
     return fourier_cf
 
-def square_mod(
-    arr: npt.NDArray
-) -> npt.NDArray:
-    """Computes square modulus to a complex vector element-wise
-    |a + bj| ^ 2 = (a + bj)(a - bj)
-    
-    Args
-    ----
-    arr : ndarray
-        Array to which apply the square modulus
 
-    Returns
-    -------
-    result : ndarray
-        Resulting array after applying the square modulus
-    """
-    return np.abs(arr) ** 2
+def get_sampling_algorithm(num_qubits: int) -> SamplingAlgorithm:
+    # num_qubits = int(input("Number of qubits between 1 and 23: "))
+    result = simulate_sycamore_circuit(N=num_qubits)
+    # result, N = simulate_basic_circuit(), 2
+
+    # Print the final state vector (wavefunction).
+    q_state = result.final_state_vector
+    print(f"\nState vector:\n{q_state}")
+
+    # Obtain probabilities for each state
+    q_state = square_mod(q_state)
+    print(f"\nProbability vector:\n{q_state}")
+
+    # Applying Welsch-Hadamard transform to obtain Fourier coefficients
+    correlators = get_fourier_cf(q_state)
+    print(f"\nArray of correlators:\n{correlators}")
+
+    # plot_XEB_for_every_k(num_qubits, correlators)
+    return SamplingAlgorithm(correlators, get_order_array(num_qubits))
+
 
 def test_fwht():
     a = np.array([1, 0, 1, 0, 0, 1, 1, 0])
@@ -78,5 +87,6 @@ def test_fwht():
     d = np.array([0, 1])
     fwht(d)
     print(d)
+
 if __name__ == "__main__":
     test_fwht()

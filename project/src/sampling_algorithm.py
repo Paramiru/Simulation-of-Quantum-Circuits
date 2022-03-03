@@ -4,23 +4,23 @@ import numpy as np
 import pandas as pd
 from numpy.random import SeedSequence
 
-from circuitUtils import get_order_array
 from IO import getPrintProbString
+from utils import square_mod
 
 
 class SamplingAlgorithm():
-
-    def __init__(self, correlators): 
+    def __init__(self, correlators, order_arr): 
         self.num_qubits = np.log2(len(correlators)).astype(int)
         if self.num_qubits % 1 != 0:
             raise ValueError("correlators should be an array of length power of 2")
-        self.order_arr = get_order_array(self.num_qubits)
+        # Get order of each Fourier coefficient / correlator
+        self.order_arr = order_arr
         self.correlators = np.array(correlators, dtype='float64')
         self.orders_and_correlators = np.array(list(zip(self.order_arr, self.correlators)))
         # if key is bitstring y, value is marginal prob of y + '0'
         self.marginals = defaultdict(np.float64)
         # Initialise random number generator
-        self.rng = np.random.default_rng(SeedSequence(123))
+        self.rng = np.random.default_rng(SeedSequence(14122000))
 
     def get_marginal_p_0(self, order):
         self.marginals[''] = 1
@@ -174,16 +174,32 @@ class SamplingAlgorithm():
             raise ValueError("pruning_depth should be between 0 and the number of qubits")
         self.get_marginal_p_0(order)
         self.add_marginal('0', pruning_depth, order, self.marginals['0'])
-        self.add_marginal('1', pruning_depth, order, self.marginals['1'])         
+        self.add_marginal('1', pruning_depth, order, self.marginals['1']) 
+
+    def get_XEB(self, k: int) -> np.float64:
+        mask = self.order_arr <= k
+        mask[0] = False
+        correlators_upto_order_k = mask * self.correlators
+        return np.sum(square_mod(correlators_upto_order_k))
+
+    def get_XEBs(self, N: int) -> np.ndarray:
+        orders = np.arange(N + 1)
+        return np.array([self.get_XEB(order) for order in orders])        
 
     def writeHog(self):
         orders = np.arange(self.num_qubits+1)
-        data = dict()
-        data['order'] = orders
+        data_ideal = dict()
+        data_ideal['order'] = orders
+        data_ideal['XEB'] = self.get_XEBs(self.num_qubits)
+        data_exp = dict()
+        data_exp['order'] = orders
         HOGs = []
         for order in orders:
             self.marginals.clear()
-            HOGs.append(np.mean(self.sample_events(10000, order, False)))
-        data['HOGs'] = HOGs
-        df = pd.DataFrame.from_dict(data)
-        df.to_csv('order-and-HOG-' + str(self.num_qubits))
+            HOGs.append(np.mean(self.sample_events(int(1e6), order, False)))
+        data_exp['HOGs'] = HOGs
+        df_exp = pd.DataFrame.from_dict(data_exp)
+        df_exp.to_csv('project/results/new-order-HOG-experimental' + str(self.num_qubits))
+        df_ideal = pd.DataFrame.from_dict(data_ideal)
+        df_ideal.to_csv('project/results/new-order-HOG-ideal' + str(self.num_qubits))
+

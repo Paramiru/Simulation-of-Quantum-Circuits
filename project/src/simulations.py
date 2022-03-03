@@ -2,14 +2,12 @@ import time
 from typing import Iterable
 
 import cirq
-import matplotlib.pyplot as plt
-import numpy as np
 from cirq.sim.state_vector_simulator import StateVectorTrialResult
 
-from algorithms import get_fourier_cf, square_mod
-from circuitUtils import (get_order_array, get_simple_circuit,
-                          get_sycamore23_qubits, get_sycamore_circuit)
-from sampling_algorithm import SamplingAlgorithm
+# from project.src.circuitUtils import get_sycamore23_qubits
+
+from circuitUtils import (get_simple_circuit, get_sycamore23_qubits,
+                          get_sycamore_circuit)
 
 
 def simulate_circuit(
@@ -78,46 +76,3 @@ def simulate_basic_circuit() -> StateVectorTrialResult:
     basic_circuit, qubit_order = get_simple_circuit()
     result                     = simulate_circuit(basic_circuit, qubit_order)
     return result
-
-def get_XEB(k, correlators):
-    mask = order_arr <= k
-    correlators_upto_order_k = mask * correlators
-    return np.sum(square_mod(correlators_upto_order_k))
-
-def plot_XEB_for_every_k(N: int, correlators):
-    orders = np.arange(N + 1)
-    XEBs = []
-    for i in orders:
-        XEBs.append(get_XEB(i, correlators))
-    XEBs = np.array(XEBs) - 1
-    plt.style.use('seaborn-whitegrid')
-    plt.plot(orders, XEBs)
-    plt.scatter(orders, XEBs)
-    plt.xlabel("Order of Correlators")
-    plt.ylabel("XEB")
-    plt.show()
-
-def get_sampling_algorithm(num_qubits: int) -> SamplingAlgorithm:
-    # num_qubits = int(input("Number of qubits between 1 and 23: "))
-    # Get order of each Fourier coefficient to use later
-    global order_arr 
-    order_arr = get_order_array(N=num_qubits)
-
-    result = simulate_sycamore_circuit(N=num_qubits)
-    # result, N = simulate_basic_circuit(), 2
-
-    # Print the final state vector (wavefunction).
-    q_state = result.final_state_vector
-    print(f"\nState vector:\n{q_state}")
-
-    # Obtain probabilities for each state
-    q_state = square_mod(q_state)
-    print(f"\nProbability vector:\n{q_state}")
-
-    # Applying Welsch-Hadamard transform to obtain Fourier coefficients
-    correlators = get_fourier_cf(q_state)
-    print(f"\nArray of correlators:\n{correlators}")
-
-    # plot_XEB_for_every_k(num_qubits, correlators)
-    
-    return SamplingAlgorithm(correlators)
