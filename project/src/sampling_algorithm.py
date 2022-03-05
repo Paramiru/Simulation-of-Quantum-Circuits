@@ -64,7 +64,6 @@ class SamplingAlgorithm():
         k = len(y)
         idxs = np.arange(2**k)
         # obtain indexes for correlators for marginal p(y + '1')
-        # TODO: check if this can be done
         new_idxs = np.array([self.get_index(y, x) for x in idxs])
         # use this mask to remove indexes that consider correlators
         # of higher order. Masking avoids looping over all the array
@@ -122,7 +121,10 @@ class SamplingAlgorithm():
                 if not self.marginals[outcome + '0']:
                     self.marginals[outcome + '0'] = self.get_prob_add_zero(outcome, prob_limit, order)
                     # do not need to store prob of adding one. We only use prob of adding 0 
-                    # to obtain what each qubit has to be
+                    # Change marginal of  'outcome' + '0' if it's > marginal of 'outcome'
+                    # to avoid negative probabilities
+                    if self.marginals[outcome + '0'] > prob_limit:
+                        self.marginals[outcome + '0'] = prob_limit
         if outcome[-1] == '1':
             self.marginals[outcome] = prob_limit 
         return outcome
@@ -164,8 +166,11 @@ class SamplingAlgorithm():
             prob_limit,
             order
         )
-        self.marginals[outcome + '0'] = marginal
-        self.marginals[outcome + '1'] = prob_limit - marginal
+        print(f"Outcome: {outcome}, marginal {marginal}, prob_limit: {prob_limit}")
+        self.marginals[outcome + '0'] = marginal if marginal <= prob_limit else prob_limit 
+        print(f"Marginal of {outcome + '0'}: {self.marginals[outcome + '0']}")
+        self.marginals[outcome + '1'] = prob_limit - self.marginals[outcome + '0']
+        print(f"Marginal of {outcome + '1'}: {self.marginals[outcome + '1']}")
         self.add_marginal(outcome + '0', pruning_depth, order, marginal)
         self.add_marginal(outcome + '1', pruning_depth, order, self.marginals[outcome + '1'])
 
