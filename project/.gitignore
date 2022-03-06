@@ -131,4 +131,5 @@ dmypy.json
 
 ../.DS_Store
 test.ipynb
+test2.ipynb
 nohup.out
