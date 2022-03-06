@@ -1,2 +1,3 @@
 #!/bin/bash
-python src/experiments.py
+nohup python src/experiments.py
+

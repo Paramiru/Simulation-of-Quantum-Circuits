@@ -15,7 +15,7 @@ in project/main
 """
 
 def exp1():
-    for num_qubits in range(24):
+    for num_qubits in range(1, 24):
         alg = get_sampling_algorithm(num_qubits)
         alg.writeHog()
 

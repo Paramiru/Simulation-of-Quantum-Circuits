@@ -196,10 +196,10 @@ class SamplingAlgorithm():
         HOGs = []
         for order in orders:
             self.marginals.clear()
-            HOGs.append(np.mean(self.sample_events(int(1e6), order, False)))
+            HOGs.append(np.mean(self.sample_events(int(1e4), order, False)))
         data_exp['HOGs'] = HOGs
         df_exp = pd.DataFrame.from_dict(data_exp)
-        df_exp.to_csv('project/results/new-order-HOG-experimental' + str(self.num_qubits))
+        df_exp.to_csv('results/new-order-HOG-experimental' + str(self.num_qubits))
         df_ideal = pd.DataFrame.from_dict(data_ideal)
-        df_ideal.to_csv('project/results/new-order-HOG-ideal' + str(self.num_qubits))
+        df_ideal.to_csv('results/new-order-HOG-ideal' + str(self.num_qubits))
 
