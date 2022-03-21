@@ -156,3 +156,8 @@ def sample_circuit(
     toc = time.perf_counter()
     print(f"Circuit sampled with {repetitions} repetitions in {toc - tic:0.4f} seconds")
     return result
+
+def get_index(y, x, num_qubits):
+    s_z = bin(x)[2:]
+    idx = (len(y) - len(s_z)) * '0' + s_z + '1'
+    return int(idx + '0' * (num_qubits-len(idx)), 2)

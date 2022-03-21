@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.typing as npt
 from numpy.testing import assert_allclose
+from sampling_algorithm_slow import SamplingAlgorithmSlow
 
 from sampling_algorithm import SamplingAlgorithm
 from simulations import simulate_sycamore_circuit
@@ -48,25 +49,25 @@ def get_fourier_cf(qn_state: npt.NDArray) -> npt.NDArray:
     return fourier_cf
 
 
-def get_sampling_algorithm(num_qubits: int) -> SamplingAlgorithm:
+def get_sampling_algorithm(num_qubits: int, seed=14122000, slow=False, VERBOSE=False) -> SamplingAlgorithm:
     # num_qubits = int(input("Number of qubits between 1 and 23: "))
     result = simulate_sycamore_circuit(N=num_qubits)
     # result, N = simulate_basic_circuit(), 2
 
     # Print the final state vector (wavefunction).
     q_state = result.final_state_vector
-    print(f"\nState vector:\n{q_state}")
+    if VERBOSE: print(f"\nState vector:\n{q_state}")
 
     # Obtain probabilities for each state
     q_state = square_mod(q_state)
-    print(f"\nProbability vector:\n{q_state}")
+    if VERBOSE: print(f"\nProbability vector:\n{q_state}")
 
     # Applying Welsch-Hadamard transform to obtain Fourier coefficients
     correlators = get_fourier_cf(q_state)
-    print(f"\nArray of correlators:\n{correlators}")
+    if VERBOSE: print(f"\nArray of correlators:\n{correlators}")
 
-    # plot_XEB_for_every_k(num_qubits, correlators)
-    return SamplingAlgorithm(correlators, get_order_array(num_qubits))
+    params = {'correlators': correlators, 'order_arr': get_order_array(num_qubits), 'seed': seed}
+    return SamplingAlgorithmSlow(**params) if slow else SamplingAlgorithm(**params)
 
 
 def test_fwht():

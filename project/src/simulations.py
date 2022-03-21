@@ -4,8 +4,6 @@ from typing import Iterable
 import cirq
 from cirq.sim.state_vector_simulator import StateVectorTrialResult
 
-# from project.src.circuitUtils import get_sycamore23_qubits
-
 from circuitUtils import (get_simple_circuit, get_sycamore23_qubits,
                           get_sycamore_circuit)
 

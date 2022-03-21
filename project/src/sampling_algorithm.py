@@ -4,12 +4,13 @@ import numpy as np
 import pandas as pd
 from numpy.random import SeedSequence
 
+from circuitUtils import get_index
 from IO import getPrintProbString
 from utils import square_mod
 
 
 class SamplingAlgorithm():
-    def __init__(self, correlators, order_arr): 
+    def __init__(self, correlators, order_arr, seed=14122000): 
         self.num_qubits = np.log2(len(correlators)).astype(int)
         if self.num_qubits % 1 != 0:
             raise ValueError("correlators should be an array of length power of 2")
@@ -20,7 +21,7 @@ class SamplingAlgorithm():
         # if key is bitstring y, value is marginal prob of y + '0'
         self.marginals = defaultdict(np.float64)
         # Initialise random number generator
-        self.rng = np.random.default_rng(SeedSequence(14122000))
+        self.rng = np.random.default_rng(SeedSequence(seed))
 
     def get_marginal_p_0(self, order):
         self.marginals[''] = 1
@@ -32,30 +33,10 @@ class SamplingAlgorithm():
         self.marginals['0'] = prob_add_zero
         self.marginals['1'] = self.marginals[''] - prob_add_zero
 
-    def get_correlators_for_marginal_slow(self, y, VERBOSE):
-        # Brute force method for the first implementation
-        # TODO: Benchmark against get_correlators_for_marginal_to_order
-        k = len(y)
-        # y is a bitstring containing a number in binary
-        y = int(y, 2)
-        correlators = np.array([])
-        for i in range(2**k):
-            s_z = bin(i)[2:]
-            index = s_z + '1'
-            index = int(index + '0' * (self.num_qubits-len(index)), 2)
-            # obtain correlator for that bitstring plus 1
-            # index = int(s_z + '1', 2)
-            correlator = self.correlators[index]
-            # compute parity function Chi_s(y)
-            sign = (-1) ** (bin(i & y).count('1') % 2)
-            # add correlator to list
-            correlators = np.append(correlators, sign * correlator)
-        return correlators
-    
-    def get_index(self, y, x):
-        s_z = bin(x)[2:]
-        idx = (len(y) - len(s_z)) * '0' + s_z + '1'
-        return int(idx + '0' * (self.num_qubits-len(idx)), 2)
+    def get_prob_add_zero(self, y, prob_limit, order):
+        l = len(y)
+        correlators = self.get_correlators_for_marginal_to_order(y, order)
+        return 0.5 * (prob_limit + np.sum(correlators)/(2**l))
 
     def get_correlators_for_marginal_to_order(self, y, order) -> np.ndarray:
         if order > self.num_qubits:
@@ -64,7 +45,7 @@ class SamplingAlgorithm():
         k = len(y)
         idxs = np.arange(2**k)
         # obtain indexes for correlators for marginal p(y + '1')
-        new_idxs = np.array([self.get_index(y, x) for x in idxs])
+        new_idxs = np.array([get_index(y, x, self.num_qubits) for x in idxs])
         # use this mask to remove indexes that consider correlators
         # of higher order. Masking avoids looping over all the array
         mask = self.orders_and_correlators[new_idxs][:,0] <= order
@@ -90,17 +71,7 @@ class SamplingAlgorithm():
         parity = np.left_shift(parity_exp.astype('int8'), 1) - 1
         return parity * self.correlators[corr_idxs]
 
-    def get_prob_add_zero(self, y, prob_limit, order):
-        l = len(y)
-        correlators = self.get_correlators_for_marginal_to_order(y, order)
-        return 0.5 * (prob_limit + np.sum(correlators)/(2**l))
-
-    def get_prob_add_zero_slow(self, y, prob_limit):
-        l = len(y)
-        correlators = self.get_correlators_for_marginal_slow(y, False)
-        return 0.5 * (prob_limit + np.sum(correlators)/(2**l))
-
-    def sample_random_circuit(self, order, VERBOSE):
+    def sample_random_circuit(self, order, VERBOSE=False):
         outcome = ''
         prob_limit = 1 # p(0) + p(1) = 2p_hat(0)
         self.get_marginal_p_0(order)
@@ -129,16 +100,16 @@ class SamplingAlgorithm():
             self.marginals[outcome] = prob_limit 
         return outcome
 
-    def sample_random_circuit_slow(self):
+    # delete before submitting
+    def sample_random_circuit_test(self):
         outcome = ''
         prob_limit = 1 # p(0) + p(1) = 2p_hat(0)
-        idx0, idx1 = 0, int('1'+'0'*(self.num_qubits-1), 2)
-        prob_add_zero = 0.5 * (self.correlators[idx0] + self.correlators[idx1])
+        self.get_marginal_p_0(self.num_qubits)
+        # self.rng = np.random.default_rng(SeedSequence(14122000))
         # Looping to obtain value of each qubit sequentially
-        self.rng = np.random.default_rng(SeedSequence(14122000))
         for step in range(self.num_qubits):
+            prob_add_zero = self.marginals[outcome + '0']
             flipped_coin = self.rng.uniform(low=0, high=prob_limit)
-            # print(getPrintProbString(step, outcome, prob_add_zero, prob_limit, flipped_coin))
             if flipped_coin <= prob_add_zero:
                 outcome += '0'
                 prob_limit = prob_add_zero
@@ -146,8 +117,23 @@ class SamplingAlgorithm():
                 outcome += '1'
                 prob_limit = prob_limit - prob_add_zero
             if (step != self.num_qubits - 1):
-                prob_add_zero = self.get_prob_add_zero_slow(outcome, prob_limit)
+                if not self.marginals[outcome + '0']:
+                    self.marginals[outcome + '0'] = self.get_prob_add_zero(outcome, prob_limit, self.num_qubits)
+                    # do not need to store prob of adding one. We only use prob of adding 0 
+                    # Change marginal of  'outcome' + '0' if it's > marginal of 'outcome'
+                    # to avoid negative probabilities
+                    if self.marginals[outcome + '0'] > prob_limit:
+                        self.marginals[outcome + '0'] = prob_limit
+        if outcome[-1] == '1':
+            self.marginals[outcome] = prob_limit 
         return outcome
+
+    # delete before submitting
+    def sample_events_test(self, num_outcomes=100):
+        # clear marginals to do every test independent of each other
+        self.marginals.clear()
+        for _ in range(num_outcomes):
+            self.sample_random_circuit_test()
     
     def sample_events(self, num_outcomes: int, order: int, VERBOSE):
         if (order > self.num_qubits):
@@ -189,22 +175,24 @@ class SamplingAlgorithm():
 
     def get_XEBs(self, N: int) -> np.ndarray:
         orders = np.arange(N + 1)
-        return np.array([self.get_XEB(order) for order in orders])        
+        return np.array([self.get_XEB(order) for order in orders])  
+
+    def get_experimental_Hog(self, order, events=int(1e4)):
+        return np.mean(self.sample_events(events, order, False))
 
     def writeHog(self):
         orders = np.arange(self.num_qubits+1)
         data_ideal = dict()
+        data_exp = dict()
         data_ideal['order'] = orders
         data_ideal['XEB'] = self.get_XEBs(self.num_qubits)
-        data_exp = dict()
         data_exp['order'] = orders
         HOGs = []
         for order in orders:
             self.marginals.clear()
-            HOGs.append(np.mean(self.sample_events(int(1e4), order, False)))
+            HOGs.append(self.get_experimental_Hog(order))
         data_exp['HOGs'] = HOGs
         df_exp = pd.DataFrame.from_dict(data_exp)
         df_exp.to_csv('results/new-order-HOG-experimental' + str(self.num_qubits))
         df_ideal = pd.DataFrame.from_dict(data_ideal)
         df_ideal.to_csv('results/new-order-HOG-ideal' + str(self.num_qubits))
-
