@@ -20,7 +20,7 @@ in src/main
 """
 
 def get_HOGs():
-    for num_qubits in range(1, 24):
+    for num_qubits in range(8, 9):
         alg = get_sampling_algorithm(num_qubits)
         alg.writeHog()
 
@@ -92,8 +92,8 @@ def timeit_benchmarks():
     step=3
     for i in np.arange(3, 18+step, step):
         alg = get_sampling_algorithm(num_qubits=i, slow=False)
-        foo = %timeit -o -r 100 -n 7 alg.sample_events_test()
-        results.append(foo)
+        # foo = %timeit -o -r 100 -n 7 alg.sample_events_test()
+        # results.append(foo)
     # write results somewhere instead of returning
     return results
     
@@ -106,4 +106,6 @@ if __name__ == "__main__":
     # step=3
     # for num_qubits in range(3, 21+step, step=step):
     # print(timeit.timeit("timeit_benchmarks(alg)", globals=globals(), number=100))
-    timeit_benchmarks()
+    # timeit_benchmarks()
+    get_HOGs()
+

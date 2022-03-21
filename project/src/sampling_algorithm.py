@@ -189,10 +189,13 @@ class SamplingAlgorithm():
         data_exp['order'] = orders
         HOGs = []
         for order in orders:
+            print(f"Doing order {order}")
             self.marginals.clear()
             HOGs.append(self.get_experimental_Hog(order))
         data_exp['HOGs'] = HOGs
         df_exp = pd.DataFrame.from_dict(data_exp)
-        df_exp.to_csv('results/new-order-HOG-experimental' + str(self.num_qubits))
+        df_exp.to_scv('LongjobWorked.csv')
+        # df_exp.to_csv('results/new-order-HOG-experimental' + str(self.num_qubits))
         df_ideal = pd.DataFrame.from_dict(data_ideal)
-        df_ideal.to_csv('results/new-order-HOG-ideal' + str(self.num_qubits))
+        # df_ideal.to_csv('results/new-order-HOG-ideal' + str(self.num_qubits))
+        df_ideal.to_csv('LongjobWorkedYeah.csv')
