@@ -1,18 +1,18 @@
 import numpy as np
-from sampling_algorithm import SamplingAlgorithm
+import pandas as pd
+from Sampler import Sampler
 
-class SamplingAlgorithmSlow(SamplingAlgorithm):
+class OnTheFlySampler(Sampler):
     def __init__(self, correlators, order_arr, seed=14122000):
         super().__init__(correlators, order_arr, seed)
 
-    def get_correlators_for_marginal_slow(self, y, VERBOSE):
+    def get_correlators_for_marginal_slow(self, y):
         # Brute force method for the first implementation
-        # TODO: Benchmark against get_correlators_for_marginal_to_order
-        k = len(y)
+        l = len(y)
         # y is a bitstring containing a number in binary
         y = int(y, 2)
         correlators = np.array([])
-        for i in range(2**k):
+        for i in range(2**l):
             s_z = bin(i)[2:]
             index = s_z + '1'
             index = int(index + '0' * (self.num_qubits-len(index)), 2)
@@ -50,8 +50,35 @@ class SamplingAlgorithmSlow(SamplingAlgorithm):
                 prob_add_zero = self.get_prob_add_zero_slow(outcome, prob_limit)
         return outcome
 
-    # delete before submitting
-    def sample_events_slow_test(self, num_outcomes=100):
-        self.marginals.clear()
-        for _ in range(num_outcomes):
-            self.sample_random_circuit_slow()
+    def sample_events(self, num_outcomes: int, order: int, VERBOSE):
+        if (order > self.num_qubits):
+            raise ValueError("The order must be smaller or equal to " + self.num_qubits)
+        prob_of_samples = np.array([])
+        for i in range(num_outcomes):
+            sample = self.sample_random_circuit(order, VERBOSE)
+            prob_of_samples = np.append(prob_of_samples, self.marginals[sample])
+            print(f"Outcome {i} is |{sample}>")
+        return prob_of_samples
+        
+    def get_experimental_Hog(self, order, events=int(1e4)):
+        return np.mean(self.sample_events(events, order, False))
+
+    def writeHog(self):
+        orders = np.arange(self.num_qubits+1)
+        data_ideal = dict()
+        data_exp = dict()
+        data_ideal['order'] = orders
+        data_ideal['XEB'] = self.get_XEBs(self.num_qubits)
+        data_exp['order'] = orders
+        HOGs = []
+        for order in orders:
+            print(f"Doing order {order}")
+            self.marginals.clear()
+            HOGs.append(self.get_experimental_Hog(order))
+        data_exp['HOGs'] = HOGs
+        df_exp = pd.DataFrame.from_dict(data_exp)
+        df_exp.to_scv('LongjobWorked.csv')
+        # df_exp.to_csv('results/new-order-HOG-experimental' + str(self.num_qubits))
+        df_ideal = pd.DataFrame.from_dict(data_ideal)
+        # df_ideal.to_csv('results/new-order-HOG-ideal' + str(self.num_qubits))
+        df_ideal.to_csv('LongjobWorkedYeah.csv')

@@ -1,9 +1,10 @@
 import numpy as np
 import numpy.typing as npt
 from numpy.testing import assert_allclose
-from sampling_algorithm_slow import SamplingAlgorithmSlow
+from onTheFlySampler import OnTheFlySampler
 
-from sampling_algorithm import SamplingAlgorithm
+from Sampler import Sampler
+from hybridSampler import HybridSampler
 from simulations import simulate_sycamore_circuit
 from utils import get_order_array, square_mod
 
@@ -27,9 +28,10 @@ def fwht(a: npt.NDArray):
                 a[j + h] = x - y
         h *= 2
 
-def get_fourier_cf(qn_state: npt.NDArray) -> npt.NDArray:
-    """Obtain Fourier coefficients from a given vector of length
-    2^n. Uses the Fast Welsch-Hadamard Transform algorithm
+def get_correlators(qn_state: npt.NDArray) -> npt.NDArray:
+    """Obtain Correlators (scaled Fourier coefficients) from a 
+    given vector of length 2^n. Uses the Fast Welsch-Hadamard 
+    Transform algorithm
 
     Args
     ----
@@ -39,22 +41,28 @@ def get_fourier_cf(qn_state: npt.NDArray) -> npt.NDArray:
     
     Returns
     -------
-    fourier_cf : npt.NDArray
-        Array containing the Fourier coefficients from the input
+    correlators : npt.NDArray
+        Array containing the Correlators from the input
         quantum state qn_state
     """
 
-    fourier_cf = np.ndarray.copy(qn_state)
-    fwht(fourier_cf)
-    return fourier_cf
+    correlators = np.ndarray.copy(qn_state)
+    fwht(correlators)
+    return correlators
 
 
-def get_sampling_algorithm(num_qubits: int, seed=14122000, slow=False, VERBOSE=False) -> SamplingAlgorithm:
-    # num_qubits = int(input("Number of qubits between 1 and 23: "))
+def get_sampling_algorithm(
+    num_qubits: int,
+    seed=14122000,
+    slow=False, 
+    VERBOSE=False
+    ) -> Sampler:
+    
     result = simulate_sycamore_circuit(N=num_qubits)
+    # Uncomment to try a simpler circuit
     # result, N = simulate_basic_circuit(), 2
 
-    # Print the final state vector (wavefunction).
+    # Obtain the final state vector (wavefunction).
     q_state = result.final_state_vector
     if VERBOSE: print(f"\nState vector:\n{q_state}")
 
@@ -62,12 +70,12 @@ def get_sampling_algorithm(num_qubits: int, seed=14122000, slow=False, VERBOSE=F
     q_state = square_mod(q_state)
     if VERBOSE: print(f"\nProbability vector:\n{q_state}")
 
-    # Applying Welsch-Hadamard transform to obtain Fourier coefficients
-    correlators = get_fourier_cf(q_state)
+    # Applying Welsch-Hadamard transform to obtain correlators
+    correlators = get_correlators(q_state)
     if VERBOSE: print(f"\nArray of correlators:\n{correlators}")
 
     params = {'correlators': correlators, 'order_arr': get_order_array(num_qubits), 'seed': seed}
-    return SamplingAlgorithmSlow(**params) if slow else SamplingAlgorithm(**params)
+    return OnTheFlySampler(**params) if slow else HybridSampler(**params)
 
 
 def test_fwht():
