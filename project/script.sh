@@ -1,3 +1,3 @@
 #!/bin/bash
-nohup python src/experiments.py
+nice -n 10 python src/experiments.py
 
