@@ -66,17 +66,17 @@ def get_experimental_XEBs_with_sem(num_qubits=5, seed=42):
             hogs.append(alg.get_experimental_Hog(order, events=int(1e3)))
         xebs = 2**alg.num_qubits * np.array(hogs) - alg.correlators[0]
         result = np.vstack((result, xebs))
-        plt.scatter(orders, xebs, c=colors[simulation])
+        plt.scatter(orders, xebs, c=colors[simulation], label=f'Experiment {simulation+1}')
     plt.plot(orders, ideal_xebs, label='Ideal XEB')
     avg_exp_xebs = np.mean(result[1:,:], axis=0)
-    plt.plot(orders, avg_exp_xebs, label='Experimental XEB')
+    plt.plot(orders, avg_exp_xebs, label='Mean of experimental XEB')
     plt.errorbar(orders, avg_exp_xebs, yerr=sem(result[1:,:], axis=0), fmt='x',
-            ecolor = 'mediumslateblue', color='m', capsize=5)
+            ecolor = 'mediumslateblue', markersize='10', color='m', capsize=5)
     plt.xlabel('Order of correlators')
     plt.xticks(orders)
     plt.ylabel('XEB')
     plt.suptitle('XEB vs order of correlators', fontsize=24)
-    plt.legend()
+    plt.legend(prop={'size': 16})
     filename = f'plotted_xeb_seed_{seed}.pdf'
     plt.savefig(filename)
     plt.show()
@@ -98,8 +98,8 @@ def fast_sampling(num_qubits, events, order):
 
     
 if __name__ == "__main__":
-    get_experimental_XEBs_with_sem(15, 30)
-    get_experimental_XEBs_with_sem(15, 69)
-    get_experimental_XEBs_with_sem(15, 96)
-    get_experimental_XEBs_with_sem(15, 501)
+    get_experimental_XEBs_with_sem(4, 30)
+    # get_experimental_XEBs_with_sem(15, 69)
+    # get_experimental_XEBs_with_sem(15, 96)
+    # get_experimental_XEBs_with_sem(15, 501)
 
