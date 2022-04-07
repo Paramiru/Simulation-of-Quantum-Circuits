@@ -5,7 +5,7 @@ This is my dissertation project for my 4th year of BSc (Hons) Computer Science &
 
 ## Files
 <ul>
-  <li> <a href="Dissertation">Simulation-of-Quantum-Circuits-on-a-laptop-Pablo.pdf</a> --> This pdf file contains my undergraduate thesis in the University of edinburgh.
+  <li> <a href="docs/Simulation-of-Quantum-Circuits-Pablo.pdf">Dissertation</a> --> This pdf file contains my undergraduate thesis in the University of edinburgh.
   <li> <a href="./src">src</a> --> This directory contains the implementation of the algorithm, alongside several experiments.
   <li> <a href="./src/experiments.py">experiments.py</a> --> Python file to try the different approaches for the sampling algorithm. It also contains the methods for reproducing the figures from chapter 6 of the dissertation.
   <li> <a href="./results">results</a> --> This directory contains the experimental XEBs obtained while variying the order of the correlators. There are also some .pdf files containing several plots.
