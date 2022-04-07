@@ -98,8 +98,8 @@ def fast_sampling(num_qubits, events, order):
 
     
 if __name__ == "__main__":
-    get_experimental_XEBs_with_sem(4, 30)
-    # get_experimental_XEBs_with_sem(15, 69)
-    # get_experimental_XEBs_with_sem(15, 96)
-    # get_experimental_XEBs_with_sem(15, 501)
+    get_experimental_XEBs_with_sem(15, 30)
+    get_experimental_XEBs_with_sem(15, 69)
+    get_experimental_XEBs_with_sem(15, 96)
+    get_experimental_XEBs_with_sem(15, 501)
 
