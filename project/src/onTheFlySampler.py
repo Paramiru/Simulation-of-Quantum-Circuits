@@ -27,7 +27,7 @@ class OnTheFlySampler(Sampler):
 
     def get_prob_add_zero_slow(self, y, prob_limit):
         l = len(y)
-        correlators = self.get_correlators_for_marginal_slow(y, False)
+        correlators = self.get_correlators_for_marginal_slow(y)
         return 0.5 * (prob_limit + np.sum(correlators)/(2**l))
 
     def sample_random_circuit_slow(self):
@@ -50,12 +50,10 @@ class OnTheFlySampler(Sampler):
                 prob_add_zero = self.get_prob_add_zero_slow(outcome, prob_limit)
         return outcome
 
-    def sample_events(self, num_outcomes: int, order: int, VERBOSE):
-        if (order > self.num_qubits):
-            raise ValueError("The order must be smaller or equal to " + self.num_qubits)
+    def sample_events(self, num_outcomes: int):
         prob_of_samples = np.array([])
         for i in range(num_outcomes):
-            sample = self.sample_random_circuit(order, VERBOSE)
+            sample = self.sample_random_circuit_slow()
             prob_of_samples = np.append(prob_of_samples, self.marginals[sample])
             print(f"Outcome {i} is |{sample}>")
         return prob_of_samples

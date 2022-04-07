@@ -2,6 +2,7 @@ from collections import defaultdict
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import sem
+import seaborn as sns
 
 from algorithms import get_sampling_algorithm
 
@@ -42,7 +43,56 @@ def get_error_on_XEB_with_num_of_samples(alg):
                 - alg.correlators[0])
     return tries
 
-def get_experimental_XEBs_with_sem(num_qubits=5, seed=42):
+def plot_error_on_XEB_with_num_of_samples(num_qubits, seed=42):
+    alg = get_sampling_algorithm(num_qubits, seed)
+    tries = get_error_on_XEB_with_num_of_samples(alg)
+    N = len(tries[100])
+    func_calls = np.array([10, 100, 250, 500, 750, 1000, 1500])[:,None]
+    xs = np.repeat(func_calls, repeats=N, axis=1)
+    plt.rcParams.update({'font.size': 20})
+    sns.set_style('ticks')
+
+    plt.figure(figsize=(15,9))
+    plt.errorbar(10, np.mean(tries[10]), yerr=np.std(tries[10]), fmt='x', capsize=5)
+    plt.scatter(xs[0], tries[10])
+
+    plt.errorbar(100, np.mean(tries[100]), yerr=np.std(tries[100]), fmt='x',
+                capsize=5)
+    plt.scatter(xs[1], tries[100])
+
+    plt.scatter(xs[2], tries[250])
+    plt.errorbar(250, np.mean(tries[250]), yerr=np.std(tries[250]), fmt='x',
+                capsize=5)
+
+    plt.scatter(xs[3], tries[500])
+    plt.errorbar(500, np.mean(tries[500]), yerr=np.std(tries[500]), fmt='x',
+                capsize=5)
+
+    plt.scatter(xs[-3], tries[750])
+    plt.errorbar(750, np.mean(tries[750]), yerr=np.std(tries[750]), fmt='x',
+                capsize=5)
+
+    plt.scatter(xs[-2], tries[1000])
+    plt.errorbar(1000, np.mean(tries[1000]), yerr=np.std(tries[1000]), fmt='x',
+                capsize=5)
+
+    plt.scatter(xs[-1], tries[1500])
+    plt.errorbar(1500, np.mean(tries[1500]), yerr=np.std(tries[1500]), fmt='x',
+                capsize=5)
+
+    ideal_XEB = alg.get_XEB(alg.num_qubits)
+    plt.axhline(y = ideal_XEB, color = 'r', linestyle = '--', label='ideal XEB')
+
+    plt.xlabel('Samples per experiment', fontsize=20)
+    plt.ylabel('XEB', fontsize=20)
+
+    plt.xticks([10, 100, 250, 500, 750, 1000, 1500], fontsize=20)
+    plt.legend(loc='best', prop={'size': 14})
+    plt.suptitle('Experimental XEB vs number of samples generated', fontsize=22)
+    # plt.savefig('XEB-vs-number-of-samples.pdf')
+    plt.show()
+
+def plot_experimental_XEBs_with_sem(num_qubits=5, seed=42):
     # plot ideal XEBs and mean of 5 experiments with error bars
     # 1. plot ideal XEB
     alg = get_sampling_algorithm(num_qubits, seed=seed)
@@ -81,25 +131,36 @@ def get_experimental_XEBs_with_sem(num_qubits=5, seed=42):
     plt.savefig(filename)
     plt.show()
 
-def on_the_fly_sampling(num_qubits, events, order):
-    alg = get_sampling_algorithm(num_qubits, slow=True)
-    alg.sample_events(events, order, False)
+def on_the_fly_sampling(num_qubits, events, VERBOSE):
+    alg = get_sampling_algorithm(num_qubits,  slow=True, VERBOSE=VERBOSE)
+    alg.sample_events(events)
 
-def hybrid_sampling(num_qubits, events, order):
-    alg = get_sampling_algorithm(num_qubits, slow=False)
+def hybrid_sampling(num_qubits, events, order, VERBOSE=True):
+    alg = get_sampling_algorithm(num_qubits, slow=False, VERBOSE=VERBOSE)
     # Uncomment and modify to have partial learning phase:
     # alg.learning_marginals(pruninc_depth=alg.num_qubits//2, order=alg.num_qubits)
     alg.sample_events(events, order, alg.sample_random_circuit_hybrid)
 
-def fast_sampling(num_qubits, events, order):
-    alg = get_sampling_algorithm(num_qubits, slow=False)
+def fast_sampling(num_qubits, events, order, VERBOSE):
+    alg = get_sampling_algorithm(num_qubits, slow=False, VERBOSE=VERBOSE)
+    print(f"\nStarting learning phase.")
     alg.learning_marginals(pruning_depth=alg.num_qubits, order=alg.num_qubits)
+    print(f"\nLearning phase successfully completed.\n")
     alg.sample_events(events, order, alg.sample_random_circuit_fast)
 
-    
-if __name__ == "__main__":
-    get_experimental_XEBs_with_sem(15, 30)
-    get_experimental_XEBs_with_sem(15, 69)
-    get_experimental_XEBs_with_sem(15, 96)
-    get_experimental_XEBs_with_sem(15, 501)
 
+
+if __name__ == "__main__":
+    # Uncomment lines to try different experiments
+    params = {'num_qubits': 12, 'events': 1000, 'VERBOSE': 1} 
+
+    # on_the_fly_sampling(**params)
+
+    # hybrid_sampling(**params, order=10)
+
+    # fast_sampling(**params, order=12)
+
+    # use num_qubits=8 minimum to get a decent plot.
+    plot_experimental_XEBs_with_sem(10)
+
+    # plot_error_on_XEB_with_num_of_samples(num_qubits=10)

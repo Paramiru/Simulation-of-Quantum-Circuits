@@ -89,7 +89,7 @@ class HybridSampler(Sampler):
         for i in range(num_outcomes):
             sample = sample_method(order, VERBOSE)
             prob_of_samples = np.append(prob_of_samples, self.marginals[sample])
-            # print(f"Outcome {i} is |{sample}>")
+            print(f"Outcome {i} is |{sample}>")
         return prob_of_samples
         
     def get_experimental_Hog(self, order, events=int(1e4)):
