@@ -75,7 +75,7 @@ pybind11==2.8.0
 pycparser==2.20
 pydantic==1.8.2
 Pygments==2.10.0
-PyJWT==1.7.1
+PyJWT==2.4.0
 pylatexenc==2.10
 pyparsing==2.4.7
 pyquil==3.0.0
