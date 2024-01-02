@@ -65,7 +65,7 @@ Pillow==10.0.1
 pip==21.2.4
 ply==3.11
 prompt-toolkit==3.0.22
-protobuf==3.13.0
+protobuf==3.18.3
 psutil==5.8.0
 ptyprocess==0.7.0
 py==1.10.0
