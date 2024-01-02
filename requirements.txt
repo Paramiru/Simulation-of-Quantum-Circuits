@@ -114,7 +114,7 @@ symengine==0.8.1
 sympy==1.9
 threadpoolctl==3.0.0
 toml==0.10.2
-tornado==6.1
+tornado==6.3.3
 tqdm==4.62.3
 traitlets==5.1.1
 tweedledum==1.1.1
